@@ -1,6 +1,7 @@
 import bsddb3 as bsddb
 import random
 import time
+import sys
 
 DA_FILE_B = "/tmp/my_db/btree_db"
 DA_FILE_H = "/tmp/my_db/hashtable_db"
@@ -8,11 +9,33 @@ DB_SIZE = 10000
 SEED = 10000000
 
 def main():
-
-    data = getData()
     
-    bTree = makeBTree(data)
-    hashTable = makeHashTable(data)
+    if len(sys.argv) != 2:
+        print("Invalid number of arguments, expected 1 but received " + str(len(sys.argv) - 1))
+        return 0
+    tmp = ["btree", "hash", "indexfile"]
+    if sys.argv[1] not in tmp:
+        print("Invalid argument, should be 'btree', 'hash', or 'indexfile'")
+        return 0
+    
+    data = getData()  
+
+    cont = True
+    
+    while quit:
+    
+        go = False
+        while go:
+            ans, go = menu()    
+    
+        if ans == 1:
+            db = makeDB(sys.argv[1])
+        elif ans == 6:
+            cont = True
+    
+
+
+
 
     parameters = getParameters(data)    
     print( type(bTree))
@@ -24,6 +47,37 @@ def main():
 
     bTree.close()
     hashTable.close()
+
+
+def menu():
+    print()
+    print("[1] Create and populate a database.")
+    print("[2] Retrieve records with a given key")
+    print("[3] Retrieve records with a given data")
+    print("[4] Retrieve records with a given range of key values")
+    print("[5] Destroy the database")
+    print("[6] Quit")
+    ans = input("Enter an option: ")
+    try:
+        tmp = int(ans)
+    except:
+        print("Non-numerical input.")
+        return null, False
+    
+    if tmp > 0 and tmp < 7:
+        return tmp, True
+    else:
+        print("Enter an option within range.")
+        return null, False
+
+def makeDB(dbtype):
+    if dbtype == "btree":
+        db = makeBTree(data)
+    elif dbtype == "hash":
+        db = makeHashTable(data)
+    elif dbtype == "indexfile":
+        db = makeIndexFile(data)    
+    return db
 
 def getData():
 
