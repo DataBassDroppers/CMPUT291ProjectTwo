@@ -14,6 +14,8 @@ def main():
     bTree = makeBTree(data)
     hashTable = makeHashTable(data)
 
+    
+
     parameters = getParameters(data)    
     print( type(bTree))
     print('Testing B Tree:\n')
@@ -117,8 +119,10 @@ def testReverse(database, value):
     while current != last: 
         if (current[1] == value):
             matches.append(current)
+            print(current)
         current = database.next()
-
+    print(value)
+    print(matches)
     return time.time() * 1000 - before
 
 def testRange(database, key1, key2):
