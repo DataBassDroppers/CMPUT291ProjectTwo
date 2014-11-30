@@ -2,6 +2,7 @@ import bsddb3 as bsddb
 import random
 import time
 import sys
+import os
 
 DA_FILE_B = "/tmp/my_db/btree_db"
 DA_FILE_H = "/tmp/my_db/hashtable_db"
@@ -25,18 +26,17 @@ def main():
         print("Invalid argument, should be 'btree', 'hash', or 'indexfile'")
         return 0
     
-    data = getData()  
-
     cont = True
     
-    while quit:
+    while cont:
     
-        go = False
+        go = True
         while go:
             ans, go = menu()    
     
         if ans == 1:
-            db = makeDB(sys.argv[1])
+            data = getData() 
+            db = makeDB(sys.argv[1],data)
         elif ans == 2:
             keySearch()
         elif ans == 3:
@@ -44,10 +44,14 @@ def main():
         elif ans == 4:
             rangeSearch()
         elif ans == 5:
-            db.close()
+            destroyDB(sys.argv[1])
         elif ans == 6:
-            cont = True
-    
+            cont = False
+
+    try:
+        db.close()
+    except:
+        pass
 
 
 
@@ -64,22 +68,34 @@ def menu():
         tmp = int(ans)
     except:
         print("Non-numerical input.")
-        return null, False
+        return null, True
     
     if tmp > 0 and tmp < 7:
-        return tmp, True
+        return tmp, False
     else:
         print("Enter an option within range.")
-        return null, False
+        return null, True
 
-def makeDB(dbtype):
+def makeDB(dbtype,data):
     if dbtype == "btree":
         db = makeBTree(data)
     elif dbtype == "hash":
         db = makeHashTable(data)
     elif dbtype == "indexfile":
-        db = makeIndexFile(data)    
+        db = makeIndexFile(data)  
+    print()
+    print("Database created and populated of type: "+ dbtype)
+    print()
     return db
+
+def destroyDB(dbtype):
+    if dbtype == "btree":
+        os.remove("/tmp/my_db/btree_db")
+    elif dbtype == "hash":
+        os.remove("/tmp/my_db/hashtable_db")
+    elif dbtype == "indexfile":
+        os.remove("/tmp/my_db/indexfile_db")
+
 
 def getData():
 
