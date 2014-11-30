@@ -37,7 +37,8 @@ def main():
             data = getData() 
             db = makeDB(sys.argv[1],data)
         elif ans == 2:
-            keySearch()
+            db=open(sys.argv[1])
+            keySearch(db)
         elif ans == 3:
             dataSearch()
         elif ans == 4:
@@ -222,6 +223,24 @@ def get_random():
 def get_random_char():
     return chr(97 + random.randint(0, 25))
 
+def open(string):
+    if string == "btree":
+        db=db = bsddb.btopen(DA_FILE_B, "r")
+    elif string == "hash":
+        db=db = bsddb.hashopen(DA_FILE_H, "r")
+    return db
+    
+    
+def keySearch(database):
+    key= input("Please enter key :")
+    before = time.time() * 1000
+    key = key.encode(encoding='UTF-8')
+    after = time.time() * 1000 - before
+    answer = database.get(key)
+    #writeAnswers(answer)
+    
+    
+    
 if __name__ == "__main__":
     main()
 
