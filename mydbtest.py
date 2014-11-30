@@ -27,7 +27,6 @@ def main():
         return 0
     
     cont = True
-    
     while cont:
     
         go = True
@@ -210,24 +209,12 @@ def testRange(database, key1, key2):
 
     return time.time() * 1000 - before
     
-
-#randomly generate some parameters for testing
-def getParameters(data):
-    
-    randomInts = []
-    randomInts.append(random.randint(0, DB_SIZE))
-    randomInts.append(random.randint(0, DB_SIZE))
-    randomInts.append(random.randint(0, DB_SIZE))
-    randomInts.append(random.randint(0, DB_SIZE))
-
-    params = []
-    params.append(data[randomInts[0]])
-    params.append(data[randomInts[1]])
-    params.append(data[randomInts[2]])
-    params.append(data[randomInts[3]])
-                            
-    return params
-
+# answer should be the tuple of (key, value)
+def writeAnswers(answer):
+    file = open('answers', 'a')
+    file.write(str(answer[0]) + '\n')
+    file.write(str(answer[1]) + '\n')
+    file.write('\n')           
 
 
 def get_random():
