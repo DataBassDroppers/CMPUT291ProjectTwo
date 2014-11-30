@@ -12,8 +12,6 @@ SEED = 10000000
 
 
 #TODO: Implement makeIndexFile(data)
-#      Implement keySearch()
-#      Implement dataSearch()
 #      Implement rangeSearch()
 
 
@@ -37,6 +35,9 @@ def main():
         if ans == 1:
             data = getData() 
             db = makeDB(sys.argv[1],data)
+            print("----Syncing to disk----")
+            db.sync()
+            print("Sync complete.\n")
         elif ans == 2:
             db=openDB(sys.argv[1])
             keySearch(db)
@@ -190,9 +191,9 @@ def get_random_char():
 
 def openDB(string):
     if string == "btree":
-        db=db = bsddb.btopen(DA_FILE_B, "r")
+        db = bsddb.btopen(DA_FILE_B, "r")
     elif string == "hash":
-        db=db = bsddb.hashopen(DA_FILE_H, "r")
+        db = bsddb.hashopen(DA_FILE_H, "r")
     elif string == "indexfile":
         pass
     return db
@@ -200,14 +201,21 @@ def openDB(string):
     
 def keySearch(database):
     key= input("Please enter key: ")
-    before = time.time() * 1000
     key = key.encode(encoding='UTF-8')
-    after = time.time() * 1000 - before
+    before = time.time() * 1000
     answer = database.get(key)
-    #writeAnswers(answer)
+    after = time.time() * 1000
+    print()
+    if answer == None:
+        print("Entries retrieved: 0") 
+    else:
+        print("Entries retrieved: 1")
+        writeAnswers(answer)
+    print("Total execution time in ms: " + str(after-before))
     
 def dataSearch(database):
     value = input("Please enter a data value: ")
+    value = value.encode(encoding='UTF-8')    
     before = time.time() * 1000
     matches = []
     last = database.last()
@@ -226,7 +234,7 @@ def dataSearch(database):
     for each in matches:
         writeAnswers(each)
     
-    return time.time() * 1000 - before
+    return 1
     
 if __name__ == "__main__":
     main()
