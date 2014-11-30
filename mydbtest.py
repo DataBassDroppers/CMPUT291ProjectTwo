@@ -8,6 +8,13 @@ DA_FILE_H = "/tmp/my_db/hashtable_db"
 DB_SIZE = 10000
 SEED = 10000000
 
+
+#TODO: Implement makeIndexFile(data)
+#      Implement keySearch()
+#      Implement dataSearch()
+#      Implement rangeSearch()
+
+
 def main():
     
     if len(sys.argv) != 2:
@@ -30,23 +37,18 @@ def main():
     
         if ans == 1:
             db = makeDB(sys.argv[1])
+        elif ans == 2:
+            keySearch()
+        elif ans == 3:
+            dataSearch()
+        elif ans == 4:
+            rangeSearch()
+        elif ans == 5:
+            db.close()
         elif ans == 6:
             cont = True
     
 
-
-
-
-    parameters = getParameters(data)    
-    print( type(bTree))
-    print('Testing B Tree:\n')
-    test(bTree, parameters)
-
-    print('\n\n\n\n\n\nTesting Hash Table:\n')
-    test(hashTable, parameters)
-
-    bTree.close()
-    hashTable.close()
 
 
 def menu():
