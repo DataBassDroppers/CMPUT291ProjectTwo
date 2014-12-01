@@ -6,13 +6,12 @@ import os
 
 DA_FILE_B = "/tmp/my_db/btree_db"
 DA_FILE_H = "/tmp/my_db/hashtable_db"
+DA_FILE_I = "/tmp/my_db/indexfile_db"
 DB_SIZE = 10000
 SEED = 10000000
 
 
 #TODO: Implement makeIndexFile(data)
-#      Implement keySearch()
-#      Implement dataSearch()
 #      Implement rangeSearch()
 
 
@@ -36,11 +35,15 @@ def main():
         if ans == 1:
             data = getData() 
             db = makeDB(sys.argv[1],data)
+            print("----Syncing to disk----")
+            db.sync()
+            print("Sync complete.\n")
         elif ans == 2:
-            db=open(sys.argv[1])
+            db=openDB(sys.argv[1])
             keySearch(db)
         elif ans == 3:
-            dataSearch()
+            db=openDB(sys.argv[1])
+            dataSearch(db)
         elif ans == 4:
             rangeSearch()
         elif ans == 5:
@@ -172,43 +175,6 @@ def test(database, parameters):
                   str(value))
     print('Range search test average time in ms: ' + str(tmp/4))    
         
-def testKey(database, key):
-    before = time.time() * 1000
-    test = database.get(key)
-    return time.time() * 1000 - before
-
-def testReverse(database, value):
-    before = time.time() * 1000
-
-    matches = []
-
-    last = database.last()
-    current = database.first()
-    
-    
-    while current != last: 
-        if (current[1] == value):
-            matches.append(current)
-        current = database.next()
-
-    return time.time() * 1000 - before
-
-def testRange(database, key1, key2):
-
-    lower = min(key1, key2)
-    upper = min(key1, key2)
-
-    before = time.time() * 1000
-
-    values = []
-
-    current = database.set_location(lower)
-    
-    while current[0] != upper:
-        values.append(current)
-        current = database.next()
-
-    return time.time() * 1000 - before
     
 # answer should be the tuple of (key, value)
 def writeAnswers(answer):
@@ -223,23 +189,52 @@ def get_random():
 def get_random_char():
     return chr(97 + random.randint(0, 25))
 
-def open(string):
+def openDB(string):
     if string == "btree":
-        db=db = bsddb.btopen(DA_FILE_B, "r")
+        db = bsddb.btopen(DA_FILE_B, "r")
     elif string == "hash":
-        db=db = bsddb.hashopen(DA_FILE_H, "r")
+        db = bsddb.hashopen(DA_FILE_H, "r")
+    elif string == "indexfile":
+        pass
     return db
     
     
 def keySearch(database):
-    key= input("Please enter key :")
-    before = time.time() * 1000
+    key= input("Please enter key: ")
     key = key.encode(encoding='UTF-8')
-    after = time.time() * 1000 - before
+    before = time.time() * 1000
     answer = database.get(key)
-    #writeAnswers(answer)
+    after = time.time() * 1000
+    print()
+    if answer == None:
+        print("Entries retrieved: 0") 
+    else:
+        print("Entries retrieved: 1")
+        writeAnswers(answer)
+    print("Total execution time in ms: " + str(after-before))
     
+def dataSearch(database):
+    value = input("Please enter a data value: ")
+    value = value.encode(encoding='UTF-8')    
+    before = time.time() * 1000
+    matches = []
+    last = database.last()
+    current = database.first()
     
+    while current != last: 
+        if (current[1] == value):
+            matches.append(current)
+        current = database.next()
+    after = time.time() * 1000
+    
+    print()
+    print("Entries retrieved: " + str(len(matches)))
+    print("Total execution time in ms: " + str(after-before))
+    
+    for each in matches:
+        writeAnswers(each)
+    
+    return 1
     
 if __name__ == "__main__":
     main()
