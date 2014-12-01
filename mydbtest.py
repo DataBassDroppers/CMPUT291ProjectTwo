@@ -7,13 +7,12 @@ import os
 DA_FILE_B = "/tmp/my_db/btree_db"
 DA_FILE_H = "/tmp/my_db/hashtable_db"
 DA_FILE_I = "/tmp/my_db/indexfile_db"
-DB_SIZE = 10000
+DB_SIZE = 1000
 SEED = 10000000
 
 
 #TODO: Implement makeIndexFile(data)
-#      Implement rangeSearch()
-
+#TODO: Implement rangeSearchHash
 
 def main():
     
@@ -21,7 +20,8 @@ def main():
         print("Invalid number of arguments, expected 1 but received " + str(len(sys.argv) - 1))
         return 0
     tmp = ["btree", "hash", "indexfile"]
-    if sys.argv[1] not in tmp:
+    dbType = sys.argv[1]
+    if dbType not in tmp:
         print("Invalid argument, should be 'btree', 'hash', or 'indexfile'")
         return 0
     
@@ -34,20 +34,21 @@ def main():
     
         if ans == 1:
             data = getData() 
-            db = makeDB(sys.argv[1],data)
+            db = makeDB(dbType,data)
             print("----Syncing to disk----")
             db.sync()
             print("Sync complete.\n")
         elif ans == 2:
-            db=openDB(sys.argv[1])
+            db=openDB(dbType)
             keySearch(db)
         elif ans == 3:
-            db=openDB(sys.argv[1])
+            db=openDB(dbType)
             dataSearch(db)
         elif ans == 4:
-            rangeSearch()
+            db=openDB(dbType)
+            rangeSearch(db, dbType)
         elif ans == 5:
-            destroyDB(sys.argv[1])
+            destroyDB(dbType)
         elif ans == 6:
             cont = False
 
@@ -102,7 +103,7 @@ def destroyDB(dbtype):
 
 def getData():
 
-    random.seed()
+    random.seed(SEED)
 
     keyValuePairs = []
     
@@ -115,6 +116,7 @@ def getData():
         value = ""
         for i in range(vrng):
             value += str(get_random_char())
+        print(key)
         key = key.encode(encoding='UTF-8')
         value = value.encode(encoding='UTF-8')
         
@@ -198,7 +200,7 @@ def openDB(string):
         pass
     return db
     
-    
+
 def keySearch(database):
     key= input("Please enter key: ")
     key = key.encode(encoding='UTF-8')
@@ -235,6 +237,57 @@ def dataSearch(database):
         writeAnswers(each)
     
     return 1
+
+
+def rangeSearch(database, dbType):
+
+    lower = input("Please enter the start of the range: ")
+    upper = input("Please enter the end of the range: ")
+
+    lower = lower.encode(encoding='UTF-8')
+    upper = upper.encode(encoding='UTF-8')
+
+    if lower > upper:
+        print("The start is lower than the end. Try again.")
+        return
+
+    if dbType == "btree":
+        return rangeSearchBTree(database, lower, upper)
+    else if dbType == "hash":
+        return rangeSearchHash(database, lower, upper)
+
+def rangeSearchBTree(database):
+    before = time.time() * 1000
+
+    values = []
+
+    last = database.last()
+    current = database.first()
+
+    while current[0] < lower:
+        if current == last:
+            print("No entries found.")
+            print("Total execution time in ms: " + str(time.time()*1000))
+            return 1
+        
+        current = database.next()
+
+
+    while current[0] < upper and current != last:
+        values.append(current)
+        current = database.next()
+
+    print("Values found within range: " + str(len(values)))
+    print("Total execution time in ms: " + str(time.time()*1000 - before))
+    return 1
+
+
+def rangeSearchHash(database):
+    pass
+    #not sure what to do here
+
+
+
     
 if __name__ == "__main__":
     main()
