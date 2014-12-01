@@ -6,12 +6,13 @@ import os
 
 DA_FILE_B = "/tmp/my_db/btree_db"
 DA_FILE_H = "/tmp/my_db/hashtable_db"
-DA_FILE_I = "/tmp/my_db/indexfile_db"
+DA_FILE_IB = "/tmp/my_db/indexfile_btree_db"
+DA_FILE_IH = "/tmp/my_db/indexfile_hash_db"
 DB_SIZE = 1000
 SEED = 10000000
 
 
-#TODO: Implement makeIndexFile(data)
+
 
 def main():
     
@@ -35,17 +36,34 @@ def main():
             data = getData() 
             db = makeDB(dbType,data)
             print("----Syncing to disk----")
-            db.sync()
+        
+            if type(db) == tuple:
+                db[0].sync()
+                db[1].sync()
+            else:
+                db.sync()
             print("Sync complete.\n")
         elif ans == 2:
             db=openDB(dbType)
-            keySearch(db)
+            
+            if type(db) == tuple:
+                keySearch(db[1])
+            else:
+                keySearch(db)
         elif ans == 3:
             db=openDB(dbType)
-            dataSearch(db)
+
+            if type(db) == tuple:
+                dataSearch(db[0])
+            else:
+                dataSearch(db)
         elif ans == 4:
             db=openDB(dbType)
-            rangeSearch(db, dbType)
+            
+            if type(db) == tuple:
+                rangeSearch(db[0], "btree")
+            else:
+                rangeSearch(db, dbType)
         elif ans == 5:
             destroyDB(dbType)
         elif ans == 6:
@@ -97,7 +115,8 @@ def destroyDB(dbtype):
     elif dbtype == "hash":
         os.remove("/tmp/my_db/hashtable_db")
     elif dbtype == "indexfile":
-        os.remove("/tmp/my_db/indexfile_db")
+        os.remove("/tmp/my_db/indexfile_hash_db")
+        os.remove("/tmp/my_db/indexfile_btree_db")
 
 
 def getData():
@@ -115,7 +134,7 @@ def getData():
         value = ""
         for i in range(vrng):
             value += str(get_random_char())
-        print(key)
+
         key = key.encode(encoding='UTF-8')
         value = value.encode(encoding='UTF-8')
         
@@ -146,6 +165,24 @@ def makeHashTable(data):
         db[pair[0]] = pair[1]    
 
     return db
+
+
+def makeIndexFile(data):
+    try:
+        dbBTree = bsddb.btopen(DA_FILE_IB, "w")
+        dbHash = bsddb.hashopen(DA_FILE_IH, "w")
+    except:
+        print("DB doesn't exist, creating a new one")
+        dbBTree = bsddb.btopen(DA_FILE_IB, "c")
+        dbHash = bsddb.hashopen(DA_FILE_IH, "c")
+
+    for pair in data:
+        dbBTree[pair[0]] = pair[1]
+        dbHash[pair[0]] = pair[1]
+
+    return (dbBTree, dbHash)
+    
+    
 
 #tests the databases and prints out results    
 def test(database, parameters):
@@ -196,7 +233,7 @@ def openDB(string):
     elif string == "hash":
         db = bsddb.hashopen(DA_FILE_H, "r")
     elif string == "indexfile":
-        pass
+        db = (bsddb.btopen(DA_FILE_B, "r"), bsddb.hashopen(DA_FILE_H, "r"))
     return db
     
 
