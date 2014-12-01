@@ -4,6 +4,8 @@ import time
 
 DA_FILE_B = "/tmp/my_db/btree_db"
 DA_FILE_H = "/tmp/my_db/hashtable_db"
+DA_FILE_IB = "/tmp/my_db/indexfile_btree_db"
+DA_FILE_IRB = "/tmp/my_db/indexfile_rbtree_db"
 DB_SIZE = 10000
 SEED = 10000000
 
@@ -13,7 +15,7 @@ def main():
     
     bTree = makeBTree(data)
     hashTable = makeHashTable(data)
-
+    indexFile = makeIndexFile(data)
     
 
     parameters = getParameters(data)    
@@ -23,6 +25,9 @@ def main():
 
     print('\n\n\n\n\n\nTesting Hash Table:\n')
     test(hashTable, parameters)
+    
+    print('\n\n\n\n\n\nTesting Index File:\n')    
+    test(indexFile, parameters)
 
     bTree.close()
     hashTable.close()
@@ -73,6 +78,25 @@ def makeHashTable(data):
 
     return db
 
+def makeIndexFile(data):
+    try:
+        dbBTree = bsddb.btopen(DA_FILE_IB, "w")
+        dbRBTree = bsddb.btopen(DA_FILE_IRB, "w")
+    except:
+        print("DB doesn't exist, creating a new one")
+        dbBTree = bsddb.btopen(DA_FILE_IB, "c")
+        dbRBTree = bsddb.btopen(DA_FILE_IRB, "c")
+
+    for pair in data:
+        dbBTree[pair[0]] = pair[1]
+        try:
+            exists = dbRBTree.get(pair[1])
+            exists = exists + " " + pair[0]
+        except:
+            dbRBTree[pair[1]] = pair[0]
+
+    return (dbBTree, dbRBTree)
+
 #tests the databases and prints out results    
 def test(database, parameters):
 
@@ -103,11 +127,18 @@ def test(database, parameters):
     print('Range search test average time in ms: ' + str(tmp/4))    
         
 def testKey(database, key):
+    if type(database) == tuple:
+        database = database[0]
+    
     before = time.time() * 1000
     test = database.get(key)
     return time.time() * 1000 - before
 
 def testReverse(database, value):
+    if type(database) == tuple:
+        database = database[1]
+        return testIndexReverse(database,value)        
+        
     before = time.time() * 1000
 
     matches = []
@@ -119,13 +150,28 @@ def testReverse(database, value):
     while current != last: 
         if (current[1] == value):
             matches.append(current)
-            print(current)
         current = database.next()
-    print(value)
-    print(matches)
+
     return time.time() * 1000 - before
 
+def testIndexReverse(database, value):
+    
+    before = time.time() * 1000
+    keyString = database.get(value)
+    after = time.time() * 1000
+    
+    keyList = keyString.split()    
+
+    
+    matches = []
+    for key in keyList:
+        matches.append((key,value))
+    
+    return after - before    
+
 def testRange(database, key1, key2):
+    if type(database) == tuple:
+        database = database[0]
 
     lower = min(key1, key2)
     upper = min(key1, key2)
