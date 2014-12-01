@@ -12,7 +12,6 @@ SEED = 10000000
 
 
 #TODO: Implement makeIndexFile(data)
-#TODO: Implement rangeSearchHash
 
 def main():
     
