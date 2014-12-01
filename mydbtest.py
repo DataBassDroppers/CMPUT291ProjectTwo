@@ -253,10 +253,10 @@ def rangeSearch(database, dbType):
 
     if dbType == "btree":
         return rangeSearchBTree(database, lower, upper)
-    else if dbType == "hash":
+    elif dbType == "hash":
         return rangeSearchHash(database, lower, upper)
 
-def rangeSearchBTree(database):
+def rangeSearchBTree(database, lower, upper):
     before = time.time() * 1000
 
     values = []
@@ -282,11 +282,24 @@ def rangeSearchBTree(database):
     return 1
 
 
-def rangeSearchHash(database):
-    pass
-    #not sure what to do here
+def rangeSearchHash(database, lower, upper):
 
+    before = time.time() * 1000
 
+    values = []
+
+    last = database.last()
+    current = database.first()
+
+    while current != last:
+        if current[0] > lower and current[0] < upper:
+            values.append(current)
+
+        current = database.next()
+
+    print("Values found within range: " + str(len(values)))
+    print("Total execution time in ms: " + str(time.time()*1000 - before))
+    return 1        
 
     
 if __name__ == "__main__":
