@@ -42,6 +42,7 @@ def main():
             if type(db) == tuple:
                 db[0].sync()
                 db[1].sync()
+                db[2].sync()
             else:
                 db.sync()
             print("Sync complete.\n")
@@ -52,7 +53,7 @@ def main():
 
             key= input("Please enter key: ")
             key = key.encode(encoding='UTF-8')
-            
+
             if type(db) == tuple:
                 database.keySearch(db[0], key)
             else:
@@ -66,9 +67,9 @@ def main():
             value = value.encode(encoding='UTF-8')
 
             if type(db) == tuple:
-                database.dataSearch(db[1], value)
+                database.dataSearch(db[1], dbType, value)
             else:
-                database.dataSearch(db, value)
+                database.dataSearch(db, dbType, value)
                 
         # Perform Range Search        
         elif ans == 4:

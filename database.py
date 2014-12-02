@@ -6,8 +6,11 @@ import os
 
 DA_FILE_B = "/tmp/my_db/btree_db"
 DA_FILE_H = "/tmp/my_db/hashtable_db"
+
+DA_FILE_IH = "/tmp/my_db/indexfile_hash_db"
+DA_FILE_IRH = "/tmp/my_db/indexfile_reverse_hash_db"
 DA_FILE_IB = "/tmp/my_db/indexfile_btree_db"
-DA_FILE_IRB = "/tmp/my_db/indexfile_rbtree_db"
+
 DB_SIZE = 1000
 SEED = 10000000
 
@@ -32,9 +35,9 @@ def destroyDB(dbtype):
     elif dbtype == "hash":
         os.remove("/tmp/my_db/hashtable_db")
     elif dbtype == "indexfile":
-        os.remove("/tmp/my_db/indexfile_hash_db")
-        os.remove("/tmp/my_db/indexfile_reverse_btree_db")
-        os.remove("/tmp/my_db/indexfile_btree_db")
+        os.remove(DA_FILE_IH)
+        os.remove(DA_FILE_IRH)
+        os.remove(DA_FILE_IB)
 
 
 
@@ -88,22 +91,28 @@ def makeHashTable(data):
 
 def makeIndexFile(data):
     try:
+        dbHash = bsddb.hashopen(DA_FILE_IH, "w")
+        dbRHash = bsddb.hashopen(DA_FILE_IRH, "w")
         dbBTree = bsddb.btopen(DA_FILE_IB, "w")
-        dbRBTree = bsddb.btopen(DA_FILE_IRB, "w")
+
     except:
         print("DB doesn't exist, creating a new one")
+        dbHash = bsddb.hashopen(DA_FILE_IH, "c")
+        dbRHashTree = bsddb.hashopen(DA_FILE_IRH, "c")
         dbBTree = bsddb.btopen(DA_FILE_IB, "c")
-        dbRBTree = bsddb.btopen(DA_FILE_IRB, "c")
 
     for pair in data:
-        dbBTree[pair[0]] = pair[1]
+        dbHash[pair[0]] = pair[1]
+        
         try:
-            exists = dbRBTree.get(pair[1])
+            exists = dbRHash.get(pair[1])
             exists = exists + " " + pair[0]
         except:
-            dbRBTree[pair[1]] = pair[0]
+            dbRHash[pair[1]] = pair[0]
 
-    return (dbBTree, dbRBTree)
+        dbBTree[pair[0]] = pair[1]
+
+    return (dbHash, dbRHash, dbBTree)
     
     
     
@@ -126,7 +135,7 @@ def openDB(string):
     elif string == "hash":
         db = bsddb.hashopen(DA_FILE_H, "r")
     elif string == "indexfile":
-        db = (bsddb.btopen(DA_FILE_B, "r"), bsddb.hashopen(DA_FILE_H, "r"))
+        db = (bsddb.hashopen(DA_FILE_IH, "r"), bsddb.hashopen(DA_FILE_IRH, "r"), bsddb.btopen(DA_FILE_IB, "r"))
     return db
     
 
@@ -144,13 +153,13 @@ def keySearch(database, key, suppressMessages = False):
     print("Total execution time in ms: " + str(after-before))
     return after - before
     
-def dataSearch(database, dbType, suppressMessages = False):
+def dataSearch(database, dbType, value, suppressMessages = False):
 
     
     if dbType == "btree" or dbType == "hash":
         return dataSearchBH(database, value)
     elif dbType == "indexfile":
-        return dataSearchIF(database[1], value)
+        return dataSearchIF(database, value)
     
     
 def dataSearchBH(database, value, suppressMessages = False):    
@@ -176,23 +185,26 @@ def dataSearchBH(database, value, suppressMessages = False):
     return after - before
 
 def dataSearchIF(database, value):    
-    
+
     before = time.time() * 1000
     keyString = database.get(value)
     after = time.time() * 1000
-    
-    keyList = keyString.split()    
+
+    if keyString == None:
+        keyList= []
+    else:
+        keyList = keyString.split()    
     
     print()
     print("Entries retrieved: " + str(len(keyList)))
     print("Total execution time in ms: " + str(after-before))
     
-    for key in keyList:
+    for each in keyList:
         writeAnswers(each)
     
     return after - before
 
-
+'''
 def rangeSearch(database, dbType, suppressMessages = False):
 
     lower = input("Please enter the start of the range: ")
@@ -206,21 +218,24 @@ def rangeSearch(database, dbType, suppressMessages = False):
         return
 
     if dbType == "btree":
-        return rangeSearchBTree(database, lower, upper)
+        return rangeSearchBTree(difatabase, lower, upper)
     elif dbType == "hash":
         return rangeSearchHash(database, lower, upper)
-
+'''
 def rangeSearchBTree(database, lower, upper, suppressMessages = False):
     before = time.time() * 1000
-
     values = []
 
     last = database.last()
     current = database.set_location(lower)
 
-    while current[0] < upper and current != last:
+    while current[0] < upper:
         values.append(current)
-        current = database.next()
+
+        try:
+            current = database.next()
+        except bsddb.db.DBNotFoundError:
+            break;
 
     after = time.time() * 1000
 
@@ -241,11 +256,14 @@ def rangeSearchHash(database, lower, upper, suppressMessages = False):
     last = database.last()
     current = database.first()
 
-    while current != last:
+    while True:
         if current[0] > lower and current[0] < upper:
             values.append(current)
 
-        current = database.next()
+        try:
+            current = database.next()
+        except bsddb.db.DBNotFoundError:
+            break;
 
     after = time.time() * 1000
 
