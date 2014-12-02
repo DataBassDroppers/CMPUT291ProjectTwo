@@ -313,26 +313,19 @@ def rangeSearchBTree(database, lower, upper):
     values = []
 
     last = database.last()
-    current = database.first()
-
-    while current[0] < lower:
-        if current == last:
-            print("No entries found.")
-            print("Total execution time in ms: " + str(time.time()*1000))
-            return 1
-        
-        current = database.next()
-
+    current = database.set_location(lower)
 
     while current[0] < upper and current != last:
         values.append(current)
         current = database.next()
 
+    after = time.time() * 1000
+
     for each in values:
         writeAnswers(each)
         
     print("Values found within range: " + str(len(values)))
-    print("Total execution time in ms: " + str(time.time()*1000 - before))
+    print("Total execution time in ms: " + str(after - before))
     return 1
 
 
@@ -351,11 +344,13 @@ def rangeSearchHash(database, lower, upper):
 
         current = database.next()
 
+    after = time.time() * 1000
+
     for each in values:
         writeAnswers(each)
 
     print("Values found within range: " + str(len(values)))
-    print("Total execution time in ms: " + str(time.time()*1000 - before))
+    print("Total execution time in ms: " + str(after - before))
     return 1        
 
     
