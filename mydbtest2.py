@@ -7,7 +7,7 @@ import os
 DA_FILE_B = "/tmp/my_db/btree_db"
 DA_FILE_H = "/tmp/my_db/hashtable_db"
 DA_FILE_IB = "/tmp/my_db/indexfile_btree_db"
-DA_FILE_IH = "/tmp/my_db/indexfile_hash_db"
+DA_FILE_IRB = "/tmp/my_db/indexfile_rbtree_db"
 DB_SIZE = 1000
 SEED = 10000000
 
@@ -32,6 +32,7 @@ def main():
         while go:
             ans, go = menu()    
     
+        # Create Database
         if ans == 1:
             data = getData() 
             db = makeDB(dbType,data)
@@ -43,20 +44,26 @@ def main():
             else:
                 db.sync()
             print("Sync complete.\n")
+            
+        # Perform Key Search    
         elif ans == 2:
             db=openDB(dbType)
             
             if type(db) == tuple:
-                keySearch(db[1])
+                keySearch(db[0])
             else:
                 keySearch(db)
+                
+        # Perform DataSearch        
         elif ans == 3:
             db=openDB(dbType)
 
             if type(db) == tuple:
-                dataSearch(db[0])
+                dataSearch(db, dbType)
             else:
                 dataSearch(db)
+                
+        # Perform Range Search        
         elif ans == 4:
             db=openDB(dbType)
             
@@ -64,8 +71,12 @@ def main():
                 rangeSearch(db[0], "btree")
             else:
                 rangeSearch(db, dbType)
+                
+        # Destroy Database
         elif ans == 5:
             destroyDB(dbType)
+            
+        # Quit program
         elif ans == 6:
             cont = False
 
@@ -170,50 +181,23 @@ def makeHashTable(data):
 def makeIndexFile(data):
     try:
         dbBTree = bsddb.btopen(DA_FILE_IB, "w")
-        dbHash = bsddb.hashopen(DA_FILE_IH, "w")
+        dbRBTree = bsddb.btopen(DA_FILE_IRB, "w")
     except:
         print("DB doesn't exist, creating a new one")
         dbBTree = bsddb.btopen(DA_FILE_IB, "c")
-        dbHash = bsddb.hashopen(DA_FILE_IH, "c")
+        dbRBTree = bsddb.btopen(DA_FILE_IRB, "c")
 
     for pair in data:
         dbBTree[pair[0]] = pair[1]
-        dbHash[pair[0]] = pair[1]
-    
+        try:
+            exists = dbRBTree.get(pair[1])
+            exists = exists + " " + pair[0]
+        except:
+            dbRBTree[pair[1]] = pair[0]
 
-    return (dbBTree, dbHash)
+    return (dbBTree, dbRBTree)
     
     
-
-#tests the databases and prints out results    
-def test(database, parameters):
-
-    tmp = 0
-    for i in range(4):
-        value = testKey(database, parameters[i][0])
-        tmp += value
-        print('Key search test ' + str(i) + ' time in ms: '+ \
-                  str(value))
-    print('Key search test average time in ms: ' + str(tmp/4))
-    
-    tmp = 0
-    print('\n\n')
-    for i in range(4):
-        value = testReverse(database, parameters[i][1])
-        tmp += value
-        print('Reverse search test ' + str(i) + ' time: '+ \
-                  str(value))
-    print('Reverse search test average time in ms: ' +  str(tmp/4))  
-        
-    tmp = 0    
-    print('\n\n')
-    for i in range(4):
-        value = testRange(database, parameters[i][0], parameters[(i + 1) % 4][0])
-        tmp += value
-        print('Range search test ' + str(i) + ' time: '+ \
-                  str(value))
-    print('Range search test average time in ms: ' + str(tmp/4))    
-        
     
 # answer should be the tuple of (key, value)
 def writeAnswers(answer):
@@ -252,9 +236,18 @@ def keySearch(database):
         writeAnswers(answer)
     print("Total execution time in ms: " + str(after-before))
     
-def dataSearch(database):
+def dataSearch(database, dbType):
     value = input("Please enter a data value: ")
-    value = value.encode(encoding='UTF-8')    
+    value = value.encode(encoding='UTF-8')
+    
+    if dbType == "btree" or dbType == "hash":
+        return dataSearchBH(database, value)
+    elif dbType == "indexfile":
+        return dataSearchIF(database[1], value)
+    
+    
+def dataSearchBH(database, value):    
+    
     before = time.time() * 1000
     matches = []
     last = database.last()
@@ -269,6 +262,27 @@ def dataSearch(database):
     print()
     print("Entries retrieved: " + str(len(matches)))
     print("Total execution time in ms: " + str(after-before))
+    
+    for each in matches:
+        writeAnswers(each)
+    
+    return 1
+
+def dataSearchIF(database, value):    
+    
+    before = time.time() * 1000
+    keyString = database.get(value)
+    after = time.time() * 1000
+    
+    keyList = keyString.split()    
+    
+    print()
+    print("Entries retrieved: " + str(len(keyList)))
+    print("Total execution time in ms: " + str(after-before))
+    
+    matches = []
+    for key in keyList:
+        matches.append((key,value))
     
     for each in matches:
         writeAnswers(each)
@@ -299,7 +313,15 @@ def rangeSearchBTree(database, lower, upper):
     values = []
 
     last = database.last()
-    current = database.set_location(lower)
+    current = database.first()
+
+    while current[0] < lower:
+        if current == last:
+            print("No entries found.")
+            print("Total execution time in ms: " + str(time.time()*1000))
+            return 1
+        
+        current = database.next()
 
 
     while current[0] < upper and current != last:

@@ -1,0 +1,3 @@
+#! /bin/tcsh
+chmod u+x  mydbtest
+python3 mydbtest.py $argv[1]
