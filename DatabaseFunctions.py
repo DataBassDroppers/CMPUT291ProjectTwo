@@ -7,11 +7,11 @@ import os
 DA_FILE_B = "/tmp/rtwong_db/btree_db"
 DA_FILE_H = "/tmp/rtwong_db/hashtable_db"
 
-DA_FILE_IH = "/tmp/rtwong_db/indexfile_hash_db"
-DA_FILE_IRH = "/tmp/rtwong_db/indexfile_reverse_hash_db"
 DA_FILE_IB = "/tmp/rtwong_db/indexfile_btree_db"
+DA_FILE_IRB = "/tmp/rtwong_db/indexfile_reverse_btree_db"
 
-DB_SIZE = 100000
+
+DB_SIZE = 100
 SEED = 10000000
 
 
@@ -30,14 +30,17 @@ def makeDB(dbtype,data):
     return db
 
 def destroyDB(dbtype):
-    if dbtype == "btree":
-        os.remove("/tmp/rtwong_db/btree_db")
-    elif dbtype == "hash":
-        os.remove("/tmp/rtwong_db/hashtable_db")
-    elif dbtype == "indexfile":
-        os.remove(DA_FILE_IH)
-        os.remove(DA_FILE_IRH)
-        os.remove(DA_FILE_IB)
+    try:
+        if dbtype == "btree":
+            os.remove("/tmp/rtwong_db/btree_db")
+        elif dbtype == "hash":
+            os.remove("/tmp/rtwong_db/hashtable_db")
+        elif dbtype == "indexfile":
+            os.remove(DA_FILE_IB)
+            os.remove(DA_FILE_IRB)
+    except OSError or bsddb.db.DBNoSuchFileError:
+        pass
+
 
 
 
@@ -91,28 +94,24 @@ def makeHashTable(data):
 
 def makeIndexFile(data):
     try:
-        dbHash = bsddb.hashopen(DA_FILE_IH, "w")
-        dbRHash = bsddb.hashopen(DA_FILE_IRH, "w")
         dbBTree = bsddb.btopen(DA_FILE_IB, "w")
-
+        dbRBTree = bsddb.btopen(DA_FILE_IRB, "w")
+        
     except:
         print("DB doesn't exist, creating a new one")
-        dbHash = bsddb.hashopen(DA_FILE_IH, "c")
-        dbRHashTree = bsddb.hashopen(DA_FILE_IRH, "c")
         dbBTree = bsddb.btopen(DA_FILE_IB, "c")
+        dbRBTree = bsddb.btopen(DA_FILE_IRB, "c")
 
     for pair in data:
-        dbHash[pair[0]] = pair[1]
+        dbBTree[pair[0]] = pair[1]
         
         try:
-            exists = dbRHash.get(pair[1])
+            exists = dbRBTree.get(pair[1])
             exists = exists + " " + pair[0]
         except:
-            dbRHash[pair[1]] = pair[0]
+            dbRBTree[pair[1]] = pair[0]
 
-        dbBTree[pair[0]] = pair[1]
-
-    return (dbHash, dbRHash, dbBTree)
+    return (dbBTree, dbRBTree)
     
     
     
@@ -135,7 +134,7 @@ def openDB(string):
     elif string == "hash":
         db = bsddb.hashopen(DA_FILE_H, "r")
     elif string == "indexfile":
-        db = (bsddb.hashopen(DA_FILE_IH, "r"), bsddb.hashopen(DA_FILE_IRH, "r"), bsddb.btopen(DA_FILE_IB, "r"))
+        db = (bsddb.btopen(DA_FILE_IB, "r"), bsddb.btopen(DA_FILE_IRB, "r"))
     return db
     
 
@@ -204,24 +203,7 @@ def dataSearchIF(database, value):
     
     return after - before
 
-'''
-def rangeSearch(database, dbType, suppressMessages = False):
 
-    lower = input("Please enter the start of the range: ")
-    upper = input("Please enter the end of the range: ")
-
-    lower = lower.encode(encoding='UTF-8')
-    upper = upper.encode(encoding='UTF-8')
-
-    if lower > upper:
-        print("The start is lower than the end. Try again.")
-        return
-
-    if dbType == "btree":
-        return rangeSearchBTree(difatabase, lower, upper)
-    elif dbType == "hash":
-        return rangeSearchHash(database, lower, upper)
-'''
 def rangeSearchBTree(database, lower, upper, suppressMessages = False):
     before = time.time() * 1000
     values = []

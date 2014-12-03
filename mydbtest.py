@@ -33,7 +33,6 @@ def main():
             if type(db) == tuple:
                 db[0].sync()
                 db[1].sync()
-                db[2].sync()
             else:
                 db.sync()
             print("Sync complete.\n")
@@ -72,7 +71,7 @@ def main():
             upper = upper.encode(encoding='UTF-8')
             
             if type(db) == tuple:
-                DatabaseFunctions.rangeSearchBTree(db[2], lower, upper)
+                DatabaseFunctions.rangeSearchBTree(db[0], lower, upper)
             elif dbType == 'btree':
                 DatabaseFunctions.rangeSearchBTree(db, lower, upper)
             elif dbType == 'hash':
@@ -84,6 +83,14 @@ def main():
             
         # Quit program
         elif ans == 6:
+
+            try:
+                os.remove('./answers')
+            except OSError:
+                pass
+
+            DatabaseFunctions.destroyDB(dbType)
+
             cont = False
 
     try:
