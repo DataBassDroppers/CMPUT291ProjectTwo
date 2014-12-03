@@ -5,10 +5,10 @@ import time
 import sys
 import os
 
-DA_FILE_B = "/tmp/my_db/btree_db"
-DA_FILE_H = "/tmp/my_db/hashtable_db"
-DA_FILE_IB = "/tmp/my_db/indexfile_btree_db"
-DA_FILE_IRB = "/tmp/my_db/indexfile_rbtree_db"
+DA_FILE_B = "/tmp/rtwong_db/btree_db"
+DA_FILE_H = "/tmp/rtwong_db/hashtable_db"
+DA_FILE_IB = "/tmp/rtwong_db/indexfile_btree_db"
+DA_FILE_IRB = "/tmp/rtwong_db/indexfile_rbtree_db"
 DB_SIZE = 1000
 SEED = 10000000
 
@@ -35,8 +35,8 @@ def main():
     
         # Create Database
         if ans == 1:
-            data = database.getData() 
-            db = database.makeDB(dbType,data)
+            data = DatabaseFunctions.getData() 
+            db = DatabaseFunctions.makeDB(dbType,data)
             print("----Syncing to disk----")
         
             if type(db) == tuple:
@@ -49,31 +49,31 @@ def main():
             
         # Perform Key Search    
         elif ans == 2:
-            db=database.openDB(dbType)
+            db=DatabaseFunctions.openDB(dbType)
 
             key= input("Please enter key: ")
             key = key.encode(encoding='UTF-8')
 
             if type(db) == tuple:
-                database.keySearch(db[0], key)
+                DatabaseFunctions.keySearch(db[0], key)
             else:
-                database.keySearch(db, key)
+                DatabaseFunctions.keySearch(db, key)
                 
         # Perform DataSearch        
         elif ans == 3:
-            db=database.openDB(dbType)
+            db=DatabaseFunctions.openDB(dbType)
 
             value = input("Please enter a data value: ")
             value = value.encode(encoding='UTF-8')
 
             if type(db) == tuple:
-                database.dataSearch(db[1], dbType, value)
+                DatabaseFunctions.dataSearch(db[1], dbType, value)
             else:
-                database.dataSearch(db, dbType, value)
+                DatabaseFunctions.dataSearch(db, dbType, value)
                 
         # Perform Range Search        
         elif ans == 4:
-            db=database.openDB(dbType)
+            db=DatabaseFunctions.openDB(dbType)
 
             lower = input("Please enter the start of the range: ")
             upper = input("Please enter the end of the range: ")
@@ -81,15 +81,15 @@ def main():
             upper = upper.encode(encoding='UTF-8')
             
             if type(db) == tuple:
-                database.rangeSearchBTree(db[2], lower, upper)
+                DatabaseFunctions.rangeSearchBTree(db[2], lower, upper)
             elif dbType == 'btree':
-                database.rangeSearchBTree(db, lower, upper)
+                DatabaseFunctions.rangeSearchBTree(db, lower, upper)
             elif dbType == 'hash':
-                database.rangeSearchHash(db, lower, upper)
+                DatabaseFunctions.rangeSearchHash(db, lower, upper)
                 
         # Destroy Database
         elif ans == 5:
-            database.destroyDB(dbType)
+            DatabaseFunctions.destroyDB(dbType)
             
         # Quit program
         elif ans == 6:

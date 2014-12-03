@@ -1,12 +1,13 @@
 import bsddb3 as bsddb
 import random
 import time
+import DatabaseFunctions
 
 DA_FILE_B = "/tmp/my_db/btree_db"
 DA_FILE_H = "/tmp/my_db/hashtable_db"
 DA_FILE_IB = "/tmp/my_db/indexfile_btree_db"
 DA_FILE_IRB = "/tmp/my_db/indexfile_rbtree_db"
-DB_SIZE = 10000
+DB_SIZE = 100000
 SEED = 10000000
 
 def main():
@@ -15,19 +16,19 @@ def main():
     
     bTree = makeBTree(data)
     hashTable = makeHashTable(data)
-    indexFile = makeIndexFile(data)
+    indexFile = DatabaseFunctions.makeIndexFile(data)
     
 
     parameters = getParameters(data)    
-    print( type(bTree))
+
     print('Testing B Tree:\n')
-    test(bTree, parameters)
+    test(bTree, parameters, 'btree')
 
     print('\n\n\n\n\n\nTesting Hash Table:\n')
-    test(hashTable, parameters)
+    test(hashTable, parameters, 'hash')
     
     print('\n\n\n\n\n\nTesting Index File:\n')    
-    test(indexFile, parameters)
+    test(indexFile, parameters, 'indexfile')
 
     bTree.close()
     hashTable.close()
@@ -78,29 +79,18 @@ def makeHashTable(data):
 
     return db
 
-def makeIndexFile(data):
-    try:
-        dbBTree = bsddb.btopen(DA_FILE_IB, "w")
-        dbRBTree = bsddb.btopen(DA_FILE_IRB, "w")
-    except:
-        print("DB doesn't exist, creating a new one")
-        dbBTree = bsddb.btopen(DA_FILE_IB, "c")
-        dbRBTree = bsddb.btopen(DA_FILE_IRB, "c")
 
-    for pair in data:
-        dbBTree[pair[0]] = pair[1]
-        try:
-            exists = dbRBTree.get(pair[1])
-            exists = exists + " " + pair[0]
-        except:
-            dbRBTree[pair[1]] = pair[0]
-
-    return (dbBTree, dbRBTree)
 
 #tests the databases and prints out results    
-def test(database, parameters):
+def test(database, parameters, dbType):
 
     tmp = 0
+
+    if dbType == 'indexfile':
+        database[0].first()
+    else:
+        database.first()
+            
     for i in range(4):
         value = testKey(database, parameters[i][0])
         tmp += value
@@ -119,9 +109,23 @@ def test(database, parameters):
         
     tmp = 0    
     print('\n\n')
+
+    lowerBounds = ['a','d','f','f']
+    upperBounds = ['c','f','g','fi']
     for i in range(4):
-        value = testRange(database, parameters[i][0], parameters[(i + 1) % 4][0])
+        key1 = lowerBounds[i].encode(encoding = 'UTF-8')
+        key2 = upperBounds[i].encode(encoding = 'UTF-8')
+
+        if dbType == 'indexfile':
+            value = DatabaseFunctions.rangeSearchBTree(database[2], key1, key2, True)
+        elif dbType == 'btree':
+            value = DatabaseFunctions.rangeSearchBTree(database, key1, key2, True)
+        elif dbType == 'hash':
+            value = DatabaseFunctions.rangeSearchHash(database, key1, key2, True)
+        else:
+            print('ERROR')
         tmp += value
+        
         print('Range search test ' + str(i) + ' time: '+ \
                   str(value))
     print('Range search test average time in ms: ' + str(tmp/4))    
@@ -169,24 +173,6 @@ def testIndexReverse(database, value):
     
     return after - before    
 
-def testRange(database, key1, key2):
-    if type(database) == tuple:
-        database = database[0]
-
-    lower = min(key1, key2)
-    upper = min(key1, key2)
-
-    before = time.time() * 1000
-
-    values = []
-
-    current = database.set_location(lower)
-    
-    while current[0] != upper:
-        values.append(current)
-        current = database.next()
-
-    return time.time() * 1000 - before
     
 
 #randomly generate some parameters for testing

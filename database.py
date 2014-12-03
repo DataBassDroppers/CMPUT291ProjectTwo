@@ -4,12 +4,12 @@ import time
 import sys
 import os
 
-DA_FILE_B = "/tmp/my_db/btree_db"
-DA_FILE_H = "/tmp/my_db/hashtable_db"
+DA_FILE_B = "/tmp/rtwong_db/btree_db"
+DA_FILE_H = "/tmp/rtwong_db/hashtable_db"
 
-DA_FILE_IH = "/tmp/my_db/indexfile_hash_db"
-DA_FILE_IRH = "/tmp/my_db/indexfile_reverse_hash_db"
-DA_FILE_IB = "/tmp/my_db/indexfile_btree_db"
+DA_FILE_IH = "/tmp/rtwong_db/indexfile_hash_db"
+DA_FILE_IRH = "/tmp/rtwong_db/indexfile_reverse_hash_db"
+DA_FILE_IB = "/tmp/rtwong_db/indexfile_btree_db"
 
 DB_SIZE = 1000
 SEED = 10000000
@@ -31,9 +31,9 @@ def makeDB(dbtype,data):
 
 def destroyDB(dbtype):
     if dbtype == "btree":
-        os.remove("/tmp/my_db/btree_db")
+        os.remove("/tmp/rtwong_db/btree_db")
     elif dbtype == "hash":
-        os.remove("/tmp/my_db/hashtable_db")
+        os.remove("/tmp/rtwong_db/hashtable_db")
     elif dbtype == "indexfile":
         os.remove(DA_FILE_IH)
         os.remove(DA_FILE_IRH)
@@ -204,24 +204,7 @@ def dataSearchIF(database, value):
     
     return after - before
 
-'''
-def rangeSearch(database, dbType, suppressMessages = False):
 
-    lower = input("Please enter the start of the range: ")
-    upper = input("Please enter the end of the range: ")
-
-    lower = lower.encode(encoding='UTF-8')
-    upper = upper.encode(encoding='UTF-8')
-
-    if lower > upper:
-        print("The start is lower than the end. Try again.")
-        return
-
-    if dbType == "btree":
-        return rangeSearchBTree(difatabase, lower, upper)
-    elif dbType == "hash":
-        return rangeSearchHash(database, lower, upper)
-'''
 def rangeSearchBTree(database, lower, upper, suppressMessages = False):
     before = time.time() * 1000
     values = []
@@ -231,7 +214,7 @@ def rangeSearchBTree(database, lower, upper, suppressMessages = False):
 
     while current[0] < upper:
         values.append(current)
-
+        
         try:
             current = database.next()
         except bsddb.db.DBNotFoundError:
