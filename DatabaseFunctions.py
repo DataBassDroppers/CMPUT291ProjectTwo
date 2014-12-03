@@ -11,7 +11,7 @@ DA_FILE_IH = "/tmp/rtwong_db/indexfile_hash_db"
 DA_FILE_IRH = "/tmp/rtwong_db/indexfile_reverse_hash_db"
 DA_FILE_IB = "/tmp/rtwong_db/indexfile_btree_db"
 
-DB_SIZE = 1000
+DB_SIZE = 100000
 SEED = 10000000
 
 

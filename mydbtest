@@ -1,4 +1,4 @@
 #! /bin/tcsh
-mkdir -p /tmp/$USER_db
+mkdir -p /tmp/rtwong_db
 chmod u+x  mydbtest
 python3 mydbtest.py $argv[1]
